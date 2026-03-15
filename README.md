@@ -16,3 +16,4 @@ cp configs/update-dev-tools ~/.local/bin/update-dev-tools
 chmod +x ~/.local/bin/update-dev-tools
 source ~/.zshrc
 ```
+.
