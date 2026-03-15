@@ -1,0 +1,46 @@
+# General zsh plugins
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting docker dotnet npm node)
+# Star... SHIP!
+eval "$(starship init zsh)"
+# fnm
+FNM_PATH="/home/idus/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "$(fnm env --shell zsh)"
+fi
+eval "$(fnm env --use-on-cd)"
+
+
+# kitty
+function set_kitty_tab_title() {
+  kitty @ set-tab-title "${PWD##*/}" 2>/dev/null
+}
+precmd_functions+=(set_kitty_tab_title)export PATH="$PATH:/home/idus/.dotnet/tools"
+
+#npm to pnpm maps
+# Use pnpm instead of npm for everyday commands
+alias ni="pnpm install"
+alias na="pnpm add"
+alias nr="pnpm run"
+alias nrd="pnpm run dev"
+alias nrb="pnpm run build"
+alias nrt="pnpm run test"
+alias nlg="pnpm list --global"
+# pnpm
+export PNPM_HOME="/home/idus/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+
+
+# Update apt-packages simply
+alias update-dev-tools="~/.local/bin/update-dev-tools"
+export PATH="$PATH:$HOME/.local/bin"
+
+
+# eza - better ls with icons and colors
+alias ls="eza --icons --group-directories-first"
+alias ll="eza --icons --group-directories-first -la"
+alias lt="eza --icons --group-directories-first --tree --level=2"alias dev-snapshot="~/.local/bin/dev-snapshot"

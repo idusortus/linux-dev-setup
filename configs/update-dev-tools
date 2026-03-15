@@ -1,0 +1,76 @@
+#!/bin/bash
+
+SUCCESS=0
+FAILED=0
+
+update_apt_package() {
+    local pkg=$1
+    local name=$2
+
+    echo "🔍 Checking $name..."
+
+    if ! dpkg -l "$pkg" &>/dev/null; then
+        echo "⚠️  $name not installed, skipping."
+        return
+    fi
+
+    if sudo apt-get install --only-upgrade "$pkg" -y -qq > /dev/null 2>&1; then
+        echo "✅ $name updated successfully."
+        ((SUCCESS++))
+    else
+        echo "❌ $name update failed."
+        ((FAILED++))
+    fi
+}
+
+update_github_binary() {
+    local name=$1
+    local cmd=$2
+    local repo=$3
+    local binary=$4
+
+    echo "🔍 Checking $name..."
+
+    if ! command -v "$cmd" &>/dev/null; then
+        echo "⚠️  $name not installed, skipping."
+        return
+    fi
+
+    local version
+    version=$(curl -s "https://api.github.com/repos/${repo}/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+
+    if [ -z "$version" ]; then
+        echo "❌ $name could not fetch latest version."
+        ((FAILED++))
+        return
+    fi
+
+    if curl -Lo "/tmp/${binary}.tar.gz" \
+        "https://github.com/${repo}/releases/latest/download/${binary}_${version}_Linux_x86_64.tar.gz" \
+        2>/dev/null && \
+       tar xf "/tmp/${binary}.tar.gz" -C /tmp "$binary" 2>/dev/null && \
+       sudo install "/tmp/${binary}" /usr/local/bin; then
+        echo "✅ $name updated to v${version} successfully."
+        ((SUCCESS++))
+    else
+        echo "❌ $name update failed."
+        ((FAILED++))
+    fi
+
+    rm -f "/tmp/${binary}" "/tmp/${binary}.tar.gz"
+}
+
+echo "🚀 Updating dev tools..."
+echo ""
+
+sudo apt-get update -qq > /dev/null 2>&1
+
+update_apt_package "code" "VS Code Stable"
+update_apt_package "code-insiders" "VS Code Insiders"
+update_apt_package "dotnet-sdk-10.0" ".NET SDK"
+
+update_github_binary "lazygit"    "lazygit"    "jesseduffield/lazygit"    "lazygit"
+update_github_binary "lazydocker" "lazydocker" "jesseduffield/lazydocker" "lazydocker"
+
+echo ""
+echo "Done! ✅ $SUCCESS succeeded, ❌ $FAILED failed."
